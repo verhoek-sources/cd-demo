@@ -66,7 +66,7 @@
             docker network create --driver overlay --attachable cd-demo
             docker service create --replicas 3 --network cd-demo --name cd-demo -p 8080:8080 ${DOCKERHUB_USERNAME}/cd-demo:${BUILD_NUMBER}_$shortCommit
           else
-            docker service update --image ${DOCKERHUB_USERNAME}/cd-demo:${BUILD_NUMBER}_${GIT_COMMIT} cd-demo
+            docker service update --image ${DOCKERHUB_USERNAME}/cd-demo:${BUILD_NUMBER}_$shortCommit cd-demo
           fi
           '''
         // run some final tests in production
