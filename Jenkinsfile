@@ -56,7 +56,6 @@
   }
 
   node("docker-prod") {
-    commit_id = "${commit_id}"
     stage("Production") {
       try {
         // Create the service if it doesn't exist otherwise just update the image
@@ -65,9 +64,9 @@
           if [[ "$SERVICES" -eq 0 ]]; then
             docker network rm cd-demo || true
             docker network create --driver overlay --attachable cd-demo
-            docker service create --replicas 3 --network cd-demo --name cd-demo -p 8080:8080 ${DOCKERHUB_USERNAME}/cd-demo:${BUILD_NUMBER}-${commit_id}
+            docker service create --replicas 3 --network cd-demo --name cd-demo -p 8080:8080 ${DOCKERHUB_USERNAME}/cd-demo:${BUILD_NUMBER}-\${commit_id}\
           else
-            docker service update --image ${DOCKERHUB_USERNAME}/cd-demo:${BUILD_NUMBER}-${commit_id} cd-demo
+            docker service update --image ${DOCKERHUB_USERNAME}/cd-demo:${BUILD_NUMBER}-\${commit_id}\ cd-demo
           fi
           '''
         // run some final tests in production
