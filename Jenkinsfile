@@ -1,7 +1,11 @@
   env.DOCKERHUB_USERNAME = 'prasantk'
 
+  def shortCommit
+
   node("docker-test") {
     checkout scm
+
+    shortCommit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
 
     stage("Unit Test") {
       sh "docker run --rm -v ${WORKSPACE}:/go/src/cd-demo golang go test cd-demo -v --run Unit"
@@ -23,11 +27,11 @@
       }
     }
     stage("Build") {
-      sh "docker build -t ${DOCKERHUB_USERNAME}/cd-demo:${BUILD_NUMBER}_${GIT_COMMIT} ."
+      sh "docker build -t ${DOCKERHUB_USERNAME}/cd-demo:${BUILD_NUMBER}_${shortCommit} ."
     }
     stage("Publish") {
       withDockerRegistry([credentialsId: 'DockerHub']) {
-        sh "docker push ${DOCKERHUB_USERNAME}/cd-demo:${BUILD_NUMBER}_${GIT_COMMIT}"
+        sh "docker push ${DOCKERHUB_USERNAME}/cd-demo:${BUILD_NUMBER}_${shortCommit}"
       }
     }
   }
@@ -38,7 +42,7 @@
     stage("Staging") {
       try {
         sh "docker rm -f cd-demo || true"
-        sh "docker run -d -p 8080:8080 --name=cd-demo ${DOCKERHUB_USERNAME}/cd-demo:${BUILD_NUMBER}_${GIT_COMMIT}"
+        sh "docker run -d -p 8080:8080 --name=cd-demo ${DOCKERHUB_USERNAME}/cd-demo:${BUILD_NUMBER}_${shortCommit}"
         sh "docker run --rm -v ${WORKSPACE}:/go/src/cd-demo --link=cd-demo -e SERVER=cd-demo golang go test cd-demo -v"
 
       } catch(e) {
@@ -60,7 +64,7 @@
           if [[ "$SERVICES" -eq 0 ]]; then
             docker network rm cd-demo || true
             docker network create --driver overlay --attachable cd-demo
-            docker service create --replicas 3 --network cd-demo --name cd-demo -p 8080:8080 ${DOCKERHUB_USERNAME}/cd-demo:${BUILD_NUMBER}_${GIT_COMMIT}
+            docker service create --replicas 3 --network cd-demo --name cd-demo -p 8080:8080 ${DOCKERHUB_USERNAME}/cd-demo:${BUILD_NUMBER}_$shortCommit
           else
             docker service update --image ${DOCKERHUB_USERNAME}/cd-demo:${BUILD_NUMBER}_${GIT_COMMIT} cd-demo
           fi
