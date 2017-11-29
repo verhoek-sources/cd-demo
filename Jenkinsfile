@@ -23,11 +23,11 @@
       }
     }
     stage("Build") {
-      sh "docker build -t ${DOCKERHUB_USERNAME}/cd-demo:${BUILD_NUMBER} ."
+      sh "docker build -t ${DOCKERHUB_USERNAME}/cd-demo:${BUILD_NUMBER}_${GIT_COMMIT} ."
     }
     stage("Publish") {
       withDockerRegistry([credentialsId: 'DockerHub']) {
-        sh "docker push ${DOCKERHUB_USERNAME}/cd-demo:${BUILD_NUMBER}"
+        sh "docker push ${DOCKERHUB_USERNAME}/cd-demo:${BUILD_NUMBER}_${GIT_COMMIT}"
       }
     }
   }
@@ -38,7 +38,7 @@
     stage("Staging") {
       try {
         sh "docker rm -f cd-demo || true"
-        sh "docker run -d -p 8080:8080 --name=cd-demo ${DOCKERHUB_USERNAME}/cd-demo:${BUILD_NUMBER}"
+        sh "docker run -d -p 8080:8080 --name=cd-demo ${DOCKERHUB_USERNAME}/cd-demo:${BUILD_NUMBER}_${GIT_COMMIT}"
         sh "docker run --rm -v ${WORKSPACE}:/go/src/cd-demo --link=cd-demo -e SERVER=cd-demo golang go test cd-demo -v"
 
       } catch(e) {
@@ -60,9 +60,9 @@
           if [[ "$SERVICES" -eq 0 ]]; then
             docker network rm cd-demo || true
             docker network create --driver overlay --attachable cd-demo
-            docker service create --replicas 3 --network cd-demo --name cd-demo -p 8080:8080 ${DOCKERHUB_USERNAME}/cd-demo:${BUILD_NUMBER}
+            docker service create --replicas 3 --network cd-demo --name cd-demo -p 8080:8080 ${DOCKERHUB_USERNAME}/cd-demo:${BUILD_NUMBER}_${GIT_COMMIT}
           else
-            docker service update --image ${DOCKERHUB_USERNAME}/cd-demo:${BUILD_NUMBER} cd-demo
+            docker service update --image ${DOCKERHUB_USERNAME}/cd-demo:${BUILD_NUMBER}_${GIT_COMMIT} cd-demo
           fi
           '''
         // run some final tests in production
