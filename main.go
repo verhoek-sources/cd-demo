@@ -21,7 +21,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 	case "ping":
 		fmt.Fprint(w, "pong")
 	case "hi":
-		fmt.Fprint(w, "hella")
+		fmt.Fprint(w, "holla")
 	default:
 		fmt.Fprint(w, "can't answer that!")
 	}
