@@ -56,11 +56,11 @@
   }
 
   node("docker-prod") {
+    commit_id = "${commit_id}"
     stage("Production") {
       try {
         // Create the service if it doesn't exist otherwise just update the image
         sh '''
-          commit_id = "${commit_id}"
           SERVICES=$(docker service ls --filter name=cd-demo --quiet | wc -l)
           if [[ "$SERVICES" -eq 0 ]]; then
             docker network rm cd-demo || true
